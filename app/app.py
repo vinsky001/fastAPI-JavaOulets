@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-
+from app.database import init_db
 from app.schema import JavaOutlet, JavaOutletCreate, JavaOutletList
 
 
@@ -12,6 +12,9 @@ app = FastAPI(
     version="0.2.0",
 )
 
+@app.on_event("startup")
+async def startup_event() -> None:
+    await init_db()
 
 @app.get("/", response_model=dict)
 def service_overview() -> dict:
