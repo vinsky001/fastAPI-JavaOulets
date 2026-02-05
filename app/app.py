@@ -1,7 +1,9 @@
 from fastapi import FastAPI
 from app.database import init_db, run_db_operation
 import json
+from contextlib import asynccontextmanager
 from datetime import datetime, timezone
+from fastapi import HTTPException
 from app.schema import (
     JavaOutlet,
     JavaOutletCreate,
@@ -14,20 +16,20 @@ from app.schema import (
     JavaOutletWithMenu,
 )
 
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> None:
+    await init_db()
+    yield
+    
+    
 
-
-
-app = FastAPI(
+app = FastAPI(lifespan=lifespan,
     title="JavaHouse Coffee Kenya Outlets API",
     description=(
         "APIs for managing JavaHouse Coffee Kenya outlets, catalog items, and orders."
     ),
     version="0.2.0",
-)
-
-@app.on_event("startup")
-async def startup_event() -> None:
-    await init_db()
+)    
 
 @app.get("/", response_model=dict)
 def service_overview() -> dict:
@@ -40,10 +42,12 @@ def service_overview() -> dict:
 @app.get("/outlets/", response_model=JavaOutletList)
 async def list_java_outlets() -> JavaOutletList:
     """Lists all Javahouse Coffee Kenya Outlets"""
-    rows = await run_db_operation(
+    try:
+        rows = await run_db_operation(
         lambda connection: connection.execute("SELECT * FROM java_outlets ORDER BY name").mappings().all()
     ) 
     
-    outlets = [dict(row) for row in rows]
-    return JavaOutletList(outlets=outlets)
-    
+        outlets = [dict(row) for row in rows]
+        return JavaOutletList(outlets=outlets)    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
