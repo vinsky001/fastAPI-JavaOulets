@@ -84,7 +84,18 @@ async_session_maker = async_sessionmaker(engine, expire_on_commit=False, class_=
     
 async def get_session() -> AsyncGenerator[AsyncSession, None]:
     async with async_session_maker() as session:
-        yield session    
+        yield session   
+        
+async def run_db_operation(operation):
+    """Execute db operations asynchronously"""  
+    try:
+        async with async_session_maker() as session:
+            result = await operation(session)
+            await session.commit()
+    except SQLAlchemyError as e:
+        print(f"Database error: {e}")
+        raise e        
+            
     
 async def init_db() -> None:
     #Initialize the database
