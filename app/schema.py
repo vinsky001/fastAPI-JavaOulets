@@ -29,16 +29,16 @@ class JavaOutletList(BaseModel):
     outlets: List[JavaOutlet]
     
 class JavaOutletCreate(BaseModel):
-    name: constr(min_length=2, max_length=120)
-    location: constr(min_length=2, max_length=120)
-    city: constr(min_length=2, max_length=80)
-    county: constr(min_length=2, max_length=80)
-    street_address: Optional[constr(min_length=4, max_length=160)] = None
-    phone_number: Optional[PhoneNumber] = None
-    rating: Optional[condecimal(max_digits=3, decimal_places=1)] = None
-    is_open: bool
-    opening_time: Optional[str] = None
-    closing_time: Optional[str] = None
+    name: str
+    location: str
+    city: str
+    county: str
+    street_address: str | None = None
+    phone_number: str | None = None
+    rating: float | None = None
+    is_open: int
+    opening_time: str | None = None
+    closing_time: str | None = None
     
 class JavaOutletMenuItem(BaseModel):
     id: int
