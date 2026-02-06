@@ -92,6 +92,7 @@ async def run_db_operation(operation):
         async with async_session_maker() as session:
             result = await operation(session)
             await session.commit()
+            return result
     except SQLAlchemyError as e:
         print(f"Database error: {e}")
         raise e        
