@@ -5,6 +5,7 @@ from fastapi import status
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from fastapi import HTTPException
+from sqlalchemy import text
 from app.schema import (
     JavaOutlet,
     JavaOutletCreate,
@@ -45,7 +46,7 @@ async def list_java_outlets() -> JavaOutletList:
     """Lists all Javahouse Coffee Kenya Outlets"""
     try:
         rows = await run_db_operation(
-        lambda connection: connection.execute("SELECT * FROM java_outlets ORDER BY name").mappings().all()
+        lambda connection: connection.execute(text("SELECT * FROM java_outlets ORDER BY name")).mappings().all()
     ) 
     
         outlets = [dict(row) for row in rows]
@@ -113,8 +114,9 @@ async def create_java_outlet(payload: JavaOutletCreate) -> JavaOutlet:
         # Fetch the inserted outlet with actual DB values
         async def _fetch_outlet(session):
             return await session.execute(
-                "SELECT * FROM java_outlets ORDER BY id DESC LIMIT 1"
-            ).mappings().first()
+                text("SELECT * FROM java_outlets ORDER BY id DESC LIMIT 1")
+            )
+            return result.mappings().first()
         
         created_outlet = await run_db_operation(_fetch_outlet)
         
@@ -129,3 +131,32 @@ async def create_java_outlet(payload: JavaOutletCreate) -> JavaOutlet:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error creating a new outlet: {str(e)}")
+    
+    
+@app.get(
+    "/outlets/{outlet_id}/",
+    response_model=JavaOutlet,
+    summary="Get specific details of a JavaHouse Outlet",
+    description="Retrieves detailed information about a specific JavaHouse Coffee Kenya outlet by its ID."
+)
+async def get_outlet(outlet_id: int) -> JavaOutlet:
+    """Retrieves details of a specific JavaHouse Coffee Kenya Outlet by its ID."""
+    try:
+        async def _fetch_outlet(session):
+            result = await session.execute(
+                text("SELECT * FROM java_outlets WHERE id = :id"),
+                {"id": outlet_id}
+            )
+            return result.mappings().first()
+        
+        outlet_data = await run_db_operation(_fetch_outlet)
+        
+        if outlet_data is None:
+            raise HTTPException(status_code=404, detail="Outlet not found")        
+        
+        outlet_dict = dict(outlet_data)
+        return JavaOutlet(**outlet_dict)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
