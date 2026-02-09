@@ -1,29 +1,26 @@
 from datetime import datetime
 from typing import List, Optional
 
-from pydantic import BaseModel, Field, condecimal, conint, constr
+from pydantic import BaseModel, Field, condecimal, conint, constr, ConfigDict
 
 CurrencyCode = constr(min_length=3, max_length=3)
 PhoneNumber = constr(min_length=7, max_length=20)
 
 
 class JavaOutlet(BaseModel):
+    model_config = ConfigDict(extra='ignore')
     id: int
-    name: constr(min_length=2, max_length=120)
-    location: constr(min_length=2, max_length=120)
-    city: constr(min_length=2, max_length=80)
-    county: constr(min_length=2, max_length=80)
-    street_address: Optional[constr(min_length=4, max_length=160)] = None
-    phone_number: Optional[PhoneNumber] = None
-    rating: Optional[condecimal(max_digits=3, decimal_places=1)] = None
-    is_open: bool
-    opening_time: Optional[str] = Field(
-        default=None, description="Local opening time in 24h format, e.g. 07:30"
-    )
-    closing_time: Optional[str] = Field(
-        default=None, description="Local closing time in 24h format, e.g. 20:00"
-    )
-    last_inspected_at: Optional[datetime] = None
+    name: str
+    location: str
+    city: str              
+    county: str            
+    street_address: Optional[str]  
+    phone_number: Optional[str]    
+    is_open: bool          
+    opening_time: Optional[str]    
+    closing_time: Optional[str]
+    rating: Optional[float]
+    last_inspected_at: Optional[datetime]
     
 class JavaOutletList(BaseModel):
     outlets: List[JavaOutlet]
